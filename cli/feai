@@ -4,166 +4,18 @@
 
 const fs = require("fs");
 const path = require("path");
-const readline = require("readline");
+const { pathToFileURL } = require("url");
 
-const VALID_FRAMEWORKS = new Set(["react", "vue"]);
+const distPath = path.join(__dirname, "..", "dist", "feai.js");
 
-function printHelp() {
-  console.log(`\nfeai - 生成前端项目系统提示词\n\n用法:\n  feai [--framework <react|vue>]\n  feai [react|vue]\n\n参数:\n  -f, --framework   指定框架并跳过交互\n  -h, --help        显示帮助\n`);
+if (!fs.existsSync(distPath)) {
+  console.error("dist/feai.js not found. Run: bun run build");
+  process.exit(1);
 }
 
-function parseArgs(argv) {
-  let framework;
-  let help = false;
+const distUrl = pathToFileURL(distPath).href;
 
-  for (let i = 0; i < argv.length; i += 1) {
-    const arg = argv[i];
-
-    if (arg === "-h" || arg === "--help") {
-      help = true;
-      continue;
-    }
-
-    if (arg === "-f" || arg === "--framework") {
-      const value = argv[i + 1];
-      if (!value) {
-        throw new Error("缺少 --framework 参数值");
-      }
-      framework = value;
-      i += 1;
-      continue;
-    }
-
-    if (arg.startsWith("--framework=")) {
-      framework = arg.split("=")[1];
-      continue;
-    }
-
-    if (!framework && VALID_FRAMEWORKS.has(arg)) {
-      framework = arg;
-      continue;
-    }
-
-    throw new Error(`未知参数: ${arg}`);
-  }
-
-  return { framework, help };
-}
-
-function askQuestion(question) {
-  const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-  });
-
-  return new Promise((resolve) => {
-    rl.question(question, (answer) => {
-      rl.close();
-      resolve(answer);
-    });
-  });
-}
-
-async function chooseFramework() {
-  while (true) {
-    const answer = await askQuestion("请选择框架 (react/vue): ");
-    const value = answer.trim().toLowerCase();
-    if (VALID_FRAMEWORKS.has(value)) {
-      return value;
-    }
-    console.log("输入无效，请输入 react 或 vue。");
-  }
-}
-
-function removeSection(content, sectionName) {
-  const lines = content.split("\n");
-  const heading = `### **${sectionName}**`;
-  let start = -1;
-  let end = lines.length;
-
-  for (let i = 0; i < lines.length; i += 1) {
-    if (lines[i].trim() === heading) {
-      start = i;
-      break;
-    }
-  }
-
-  if (start === -1) {
-    return content;
-  }
-
-  for (let i = start + 1; i < lines.length; i += 1) {
-    const line = lines[i];
-    if (
-      line.startsWith("### **") ||
-      line.startsWith("---") ||
-      line.startsWith("## ") ||
-      line.startsWith("# ")
-    ) {
-      end = i;
-      break;
-    }
-  }
-
-  lines.splice(start, end - start);
-  return lines.join("\n").replace(/\n{3,}/g, "\n\n").trimEnd() + "\n";
-}
-
-function ensureFileExists(filePath, label) {
-  if (!fs.existsSync(filePath)) {
-    throw new Error(`${label} 不存在: ${filePath}`);
-  }
-}
-
-async function main() {
-  const { framework: argFramework, help } = parseArgs(process.argv.slice(2));
-
-  if (help) {
-    printHelp();
-    return;
-  }
-
-  let framework = argFramework;
-  if (framework) {
-    framework = framework.trim().toLowerCase();
-    if (!VALID_FRAMEWORKS.has(framework)) {
-      throw new Error(`不支持的框架: ${framework}`);
-    }
-  } else {
-    framework = await chooseFramework();
-  }
-
-  const rootDir = process.cwd();
-  const outputDir = path.join(rootDir, "dist", "fe-prompt");
-  const outputPromptDir = path.join(outputDir, "system-prompt");
-
-  const cliDir = __dirname;
-  const templatePath = path.join(cliDir, "AGENTS.template.md");
-  const promptDir = path.join(cliDir, "system-prompt");
-
-  ensureFileExists(templatePath, "模板文件");
-  ensureFileExists(promptDir, "system-prompt 目录");
-
-  fs.rmSync(outputDir, { recursive: true, force: true });
-  fs.mkdirSync(outputPromptDir, { recursive: true });
-
-  const template = fs.readFileSync(templatePath, "utf8");
-  const removeName = framework === "react" ? "Vue" : "React";
-  const agentContent = removeSection(template, removeName);
-  fs.writeFileSync(path.join(outputDir, "AGENT.md"), agentContent);
-
-  const tailwindPath = path.join(promptDir, "tailwind.md");
-  const frameworkPath = path.join(promptDir, `${framework}.md`);
-  ensureFileExists(tailwindPath, "tailwind 文件");
-  ensureFileExists(frameworkPath, "框架文件");
-
-  fs.copyFileSync(tailwindPath, path.join(outputPromptDir, "tailwind.md"));
-  fs.copyFileSync(frameworkPath, path.join(outputPromptDir, `${framework}.md`));
-
-  console.log(`已生成: ${outputDir}`);
-}
-
-main().catch((error) => {
-  console.error(`错误: ${error.message}`);
+import(distUrl).catch((error) => {
+  console.error(`Failed to load ${distPath}: ${error.message}`);
   process.exit(1);
 });

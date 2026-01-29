@@ -3,14 +3,17 @@
   "version": "0.2.0",
   "description": "CLI to generate frontend prompt files",
   "bin": {
-    "feai": "cli/feai"
+    "feai": "dist/feai"
   },
   "files": [
-    "cli",
+    "dist",
     "README.md",
     "LICENSE"
   ],
   "scripts": {
+    "build": "bun build cli/feai.ts --outdir dist --target node && node scripts/postbuild.cjs",
+    "dev": "bun run cli/feai.ts",
+    "prepublishOnly": "bun run build",
     "release": "release-it",
     "release:dry": "release-it --dry-run"
   },
@@ -31,6 +34,8 @@
   },
   "devDependencies": {
     "@release-it/conventional-changelog": "^7.0.0",
+    "@types/node": "^22.0.0",
+    "bun": "^1.1.0",
     "release-it": "^16.0.0"
   }
 }

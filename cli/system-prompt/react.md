@@ -8,6 +8,8 @@
 
 **Rationale**: Avoid verbose spread syntax and reduce mutation errors.
 
+**Note**: If the project does not already have `use-immer`, install it (e.g., `npm i use-immer`) before using.
+
 **Correct:**
 
 ```javascript
@@ -70,6 +72,8 @@ function MyComponent() { /* ... */ }
 - Reduces boilerplate code and common bugs
 - Well-tested and maintained by Alibaba
 - Covers most common React hook patterns
+
+**Note**: If the project does not already have `ahooks`, install it (e.g., `npm i ahooks`) before using.
 
 ### Common Hooks Index
 

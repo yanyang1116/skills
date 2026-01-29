@@ -27,20 +27,30 @@ Replace this placeholder when adapting to a specific project.
 
 This section contains framework-specific coding guidelines and best practices.
 
+<!-- FEAI:react:start -->
 ### **React**
 [`system-prompt/react.md`](./system-prompt/react.md)
 
 **Applies to**: `.ts`, `.tsx`, `.js`, `.jsx` files in React projects
+<!-- FEAI:react:end -->
 
+<!-- FEAI:vue:start -->
 ### **Vue**
 [`system-prompt/vue.md`](./system-prompt/vue.md)
 
 **Applies to**: `.vue`, `.ts`, `.js` files in Vue projects
+<!-- FEAI:vue:end -->
 
 ### **Tailwind CSS**
 [`system-prompt/tailwind.md`](./system-prompt/tailwind.md)
 
 **Applies to**: styling in `.vue`, `.tsx`, `.html` files
+
+### Number Calculation & Precision
+[`system-prompt/number-calculation.md`](./system-prompt/number-calculation.md)
+
+### TypeScript
+[`system-prompt/typescript.md`](./system-prompt/typescript.md)
 
 ---
 
@@ -74,6 +84,14 @@ feature-name/
   └── types.ts           # Shared types
 ```
 
+### Date & Number Display
+<!--
+TODO: Add project-specific conventions for date and number display.
+Describe formatting rules (locales, time zones, currency, rounding),
+and any shared utilities or libraries used for consistency.
+Fill this section according to the project's requirements.
+-->
+
 ---
 
 ## 5. Development Rules
@@ -97,7 +115,10 @@ feature-name/
 - **Test your changes**: Ensure changes don't break existing functionality
 - **Document non-obvious**: Add comments for complex logic or non-standard approaches
 
-### 4. Change Scope Management
+### 4. Documentation by Path
+- **Follow path-specific docs**: When a doc path is provided, open it and read carefully; strictly follow the content and constraints in that document.
+
+### 5. Change Scope Management
 - Only modify files directly related to the current task
 - Don't "improve" code outside the change scope
 - Resist the urge to fix unrelated issues in the same commit
