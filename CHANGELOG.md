@@ -1,5 +1,13 @@
 
 
+## [0.3.0](https://github.com/yanyang1116/skills/compare/v0.2.0...v0.3.0) (2026-01-29)
+
+
+### Features
+
+* Improve CLI build process with TypeScript configuration, direct executable output, and English prompts. ([7cb716a](https://github.com/yanyang1116/skills/commit/7cb716a03a72b05fc4d0c59f0a008e95e8a2a1c0))
+* Migrate CLI to TypeScript with a build process and add new system prompts and guidelines. ([8b7e39a](https://github.com/yanyang1116/skills/commit/8b7e39a26708f4d19929be68da6b60a55247e4c5))
+
 ## 0.2.0 (2026-01-29)
 
 
