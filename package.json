@@ -26,6 +26,9 @@
   "engines": {
     "node": ">=18"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "devDependencies": {
     "@release-it/conventional-changelog": "^7.0.0",
     "release-it": "^16.0.0"
