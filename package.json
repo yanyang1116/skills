@@ -1,0 +1,33 @@
+{
+  "name": "@ykg/feai",
+  "version": "0.1.0",
+  "description": "CLI to generate frontend prompt files",
+  "bin": {
+    "feai": "cli/feai"
+  },
+  "files": [
+    "cli",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "release": "release-it",
+    "release:dry": "release-it --dry-run"
+  },
+  "keywords": [
+    "cli",
+    "prompt",
+    "frontend",
+    "react",
+    "vue",
+    "ai"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@release-it/conventional-changelog": "^7.0.0",
+    "release-it": "^16.0.0"
+  }
+}

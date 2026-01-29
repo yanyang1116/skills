@@ -1,0 +1,16 @@
+{
+  "git": {
+    "requireCleanWorkingDir": true,
+    "tagName": "v${version}"
+  },
+  "npm": {
+    "publish": true,
+    "access": "public"
+  },
+  "plugins": {
+    "@release-it/conventional-changelog": {
+      "preset": "conventionalcommits",
+      "infile": "CHANGELOG.md"
+    }
+  }
+}
