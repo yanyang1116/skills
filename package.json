@@ -11,7 +11,8 @@
     "LICENSE"
   ],
   "scripts": {
-    "build": "bun build cli/feai.ts --outdir dist --target node && node scripts/postbuild.cjs",
+    "clean": "node scripts/clean.cjs",
+    "build": "npm run clean && bun build cli/feai.ts --outfile dist/feai --target node --banner '#!/usr/bin/env node' && node scripts/postbuild.cjs",
     "dev": "bun run cli/feai.ts",
     "prepublishOnly": "bun run build",
     "release": "release-it",

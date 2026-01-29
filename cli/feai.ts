@@ -1,6 +1,6 @@
-const fs = require("node:fs");
-const path = require("node:path");
-const readline = require("node:readline");
+import * as fs from "node:fs";
+import * as path from "node:path";
+import * as readline from "node:readline";
 
 type Framework = "react" | "vue";
 
@@ -11,7 +11,7 @@ function isFramework(value: string): value is Framework {
 }
 
 function printHelp(): void {
-  console.log(`\nfeai - 生成前端项目系统提示词\n\n用法:\n  feai [--framework <react|vue>]\n  feai [react|vue]\n\n参数:\n  -f, --framework   指定框架并跳过交互\n  -h, --help        显示帮助\n`);
+  console.log(`\nfeai - Generate frontend prompt files\n\nUsage:\n  feai [--framework <react|vue>]\n  feai [react|vue]\n\nOptions:\n  -f, --framework   Select framework and skip interactive prompt\n  -h, --help        Show help\n`);
 }
 
 function parseArgs(argv: string[]): { framework?: Framework; help: boolean } {
@@ -29,7 +29,7 @@ function parseArgs(argv: string[]): { framework?: Framework; help: boolean } {
     if (arg === "-f" || arg === "--framework") {
       const value = argv[i + 1];
       if (!value) {
-        throw new Error("缺少 --framework 参数值");
+        throw new Error("Missing value for --framework");
       }
       framework = value as Framework;
       i += 1;
@@ -47,7 +47,7 @@ function parseArgs(argv: string[]): { framework?: Framework; help: boolean } {
       continue;
     }
 
-    throw new Error(`未知参数: ${arg}`);
+    throw new Error(`Unknown argument: ${arg}`);
   }
 
   return { framework, help };
@@ -69,12 +69,12 @@ function askQuestion(question: string): Promise<string> {
 
 async function chooseFramework(): Promise<Framework> {
   while (true) {
-    const answer = await askQuestion("请选择框架 (react/vue): ");
+    const answer = await askQuestion("Select framework (react/vue): ");
     const value = answer.trim().toLowerCase();
     if (isFramework(value)) {
       return value;
     }
-    console.log("输入无效，请输入 react 或 vue。");
+    console.log("Invalid input. Please enter react or vue.");
   }
 }
 
@@ -90,7 +90,7 @@ function removeSection(content: string, marker: Framework): string {
 
 function ensureFileExists(filePath: string, label: string): void {
   if (!fs.existsSync(filePath)) {
-    throw new Error(`${label} 不存在: ${filePath}`);
+    throw new Error(`${label} not found: ${filePath}`);
   }
 }
 
@@ -106,7 +106,7 @@ async function main(): Promise<void> {
   if (framework) {
     framework = framework.trim().toLowerCase() as Framework;
     if (!isFramework(framework)) {
-      throw new Error(`不支持的框架: ${framework}`);
+      throw new Error(`Unsupported framework: ${framework}`);
     }
   } else {
     framework = await chooseFramework();
@@ -120,7 +120,7 @@ async function main(): Promise<void> {
   const isProduction = process.env.NODE_ENV === "production";
   if (isProduction && !fs.existsSync(distAssetsDir)) {
     throw new Error(
-      `assets 不存在: ${distAssetsDir}. 请先执行构建命令生成 dist assets。`
+      `Assets not found: ${distAssetsDir}. Run the build command to generate dist assets first.`
     );
   }
 
@@ -129,7 +129,7 @@ async function main(): Promise<void> {
   const promptDir = path.join(assetsBase, "system-prompt");
 
   ensureFileExists(templatePath, "模板文件");
-  ensureFileExists(promptDir, "system-prompt 目录");
+  ensureFileExists(promptDir, "system-prompt directory");
 
   fs.rmSync(outputDir, { recursive: true, force: true });
   fs.mkdirSync(outputPromptDir, { recursive: true });
@@ -143,10 +143,10 @@ async function main(): Promise<void> {
   const precisionPath = path.join(promptDir, "number-calculation.md");
   const typescriptPath = path.join(promptDir, "typescript.md");
   const frameworkPath = path.join(promptDir, `${framework}.md`);
-  ensureFileExists(tailwindPath, "tailwind 文件");
-  ensureFileExists(precisionPath, "number-calculation 文件");
-  ensureFileExists(typescriptPath, "typescript 文件");
-  ensureFileExists(frameworkPath, "框架文件");
+  ensureFileExists(tailwindPath, "tailwind file");
+  ensureFileExists(precisionPath, "number-calculation file");
+  ensureFileExists(typescriptPath, "typescript file");
+  ensureFileExists(frameworkPath, "framework file");
 
   fs.copyFileSync(tailwindPath, path.join(outputPromptDir, "tailwind.md"));
   fs.copyFileSync(
@@ -159,10 +159,10 @@ async function main(): Promise<void> {
   );
   fs.copyFileSync(frameworkPath, path.join(outputPromptDir, `${framework}.md`));
 
-  console.log(`已生成: ${outputDir}`);
+  console.log(`Generated: ${outputDir}`);
 }
 
 main().catch((error: Error) => {
-  console.error(`错误: ${error.message}`);
+  console.error(`Error: ${error.message}`);
   process.exit(1);
 });

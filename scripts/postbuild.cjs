@@ -19,6 +19,6 @@ fs.cpSync(
 );
 
 const binPath = path.join(distDir, "feai");
-const binContent = "#!/usr/bin/env node\n\nrequire(\"./feai.js\");\n";
-fs.writeFileSync(binPath, binContent);
-fs.chmodSync(binPath, 0o755);
+if (fs.existsSync(binPath)) {
+  fs.chmodSync(binPath, 0o755);
+}
