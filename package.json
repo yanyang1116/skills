@@ -12,7 +12,7 @@
   ],
   "scripts": {
     "clean": "node scripts/clean.cjs",
-    "build": "npm run clean && bun build cli/feai.ts --outfile dist/feai --target node --banner '#!/usr/bin/env node' && node scripts/postbuild.cjs",
+    "build": "npm run clean && bun build cli/feai.ts --outfile dist/feai --target node --format cjs --banner '#!/usr/bin/env node' && node scripts/postbuild.cjs",
     "dev": "bun run cli/feai.ts",
     "prepublishOnly": "bun run build",
     "release": "release-it",
