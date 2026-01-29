@@ -4,11 +4,11 @@
 
 You MUST use `ref()` or `shallowRef()` for all reactive state. Using `reactive()` or `shallowReactive()` is **STRICTLY FORBIDDEN**. This applies to **component state** and **composable return values**.
 
-**✅ Correct:** 
+**Correct:** 
 `const user = ref({ name: 'Vue' })`  
 `return { count: ref(0) }`
 
-**❌ FORBIDDEN:** 
+**FORBIDDEN:** 
 `const user = reactive({ name: 'Vue' })`  
 `return reactive({ count: 0 })`
 
@@ -18,8 +18,8 @@ You MUST use `ref()` or `shallowRef()` for all reactive state. Using `reactive()
 
 You MUST use `watch` for explicit dependency tracking. Using `watchEffect` is **FORBIDDEN** to prevent accidental re-runs and implicit dependencies.
 
-**✅ Correct:** `watch(source, () => { ... })`  
-**❌ FORBIDDEN:** `watchEffect(() => { ... })`
+**Correct:** `watch(source, () => { ... })`  
+**FORBIDDEN:** `watchEffect(() => { ... })`
 
 ---
 
