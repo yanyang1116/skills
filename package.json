@@ -1,42 +1,4 @@
 {
-  "name": "@ykg/feai",
-  "version": "0.3.0",
-  "description": "CLI to generate frontend prompt files",
-  "bin": {
-    "feai": "dist/feai"
-  },
-  "files": [
-    "dist",
-    "README.md",
-    "LICENSE"
-  ],
-  "scripts": {
-    "clean": "node scripts/clean.cjs",
-    "build": "npm run clean && bun build cli/feai.ts --outfile dist/feai --target node --format cjs --banner '#!/usr/bin/env node' && node scripts/postbuild.cjs",
-    "dev": "bun run cli/feai.ts",
-    "prepublishOnly": "bun run build",
-    "release": "release-it",
-    "release:dry": "release-it --dry-run"
-  },
-  "keywords": [
-    "cli",
-    "prompt",
-    "frontend",
-    "react",
-    "vue",
-    "ai"
-  ],
-  "license": "MIT",
-  "engines": {
-    "node": ">=18"
-  },
-  "publishConfig": {
-    "access": "public"
-  },
-  "devDependencies": {
-    "@release-it/conventional-changelog": "^7.0.0",
-    "@types/node": "^22.0.0",
-    "bun": "^1.1.0",
-    "release-it": "^16.0.0"
-  }
+  "name": "skills",
+  "description": "yy's skills"
 }
