@@ -1,13 +1,13 @@
 ---
-name: shadcn-react-usage
+name: shadcn-usage
 description: Trigger only in React projects when the user mentions shadcn/ui (shadui/shadcn) or asks for UI layout, design, styling, or component work that should use shadcn/ui. Requires shadcn-mcp; if missing, stop and ask the user to install. If shadcn/ui is requested but not initialized, stop and ask the user to initialize.
 ---
 
-# Shadcn React Usage (Simplified)
+# Shadcn Usage
 
 ## Trigger Conditions
 
-- **Step 1 — Framework gate (mandatory)**: Trigger only in React projects (e.g., `package.json` has `react` or `react-dom`). If the project is Vue, never trigger this skill.
+- **Step 1 — Framework gate (mandatory)**: Trigger only in React projects (e.g., `package.json` has `react` or `react-dom`). If the project is not React, never trigger this skill.
 - **Step 2 — Intent (if / else, mandatory)**:
   - **If** the user explicitly asks to use shadcn/ui (shadui/shadcn), **always trigger**.
   - **Else if** the user asks for UI changes (styling, layout, components, or visual arrangement) **and** the project already has shadcn/ui initialized (`components.json` exists or `components/ui/` exists), **always trigger**.
