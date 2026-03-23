@@ -2,9 +2,22 @@
 # Deep search via Codex CLI with dispatch pattern (background + Telegram callback)
 set -euo pipefail
 
-RESULT_DIR="/home/ubuntu/clawd/data/codex-search-results"
-OPENCLAW_BIN="/home/ubuntu/.npm-global/bin/openclaw"
-CODEX_BIN="${CODEX_BIN:-/home/ubuntu/.npm-global/bin/codex}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILL_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+
+RESULT_DIR="${RESULT_DIR:-${SKILL_DIR}/data/codex-search-results}"
+OPENCLAW_BIN="${OPENCLAW_BIN:-$(command -v openclaw || true)}"
+CODEX_BIN="${CODEX_BIN:-$(command -v codex || true)}"
+TIMEOUT_BIN="${TIMEOUT_BIN:-$(command -v timeout || command -v gtimeout || true)}"
+OPENCLAW_CONFIG="${OPENCLAW_CONFIG:-$HOME/.openclaw/openclaw.json}"
+
+iso_now() {
+  if date -Iseconds >/dev/null 2>&1; then
+    date -Iseconds
+  else
+    date +"%Y-%m-%dT%H:%M:%S%z"
+  fi
+}
 
 # Defaults
 PROMPT=""
@@ -14,6 +27,7 @@ SANDBOX="workspace-write"
 TIMEOUT=120
 TELEGRAM_GROUP=""
 TASK_NAME="search-$(date +%s)"
+START_EPOCH="$(date +%s)"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -32,6 +46,11 @@ if [[ -z "$PROMPT" ]]; then
   exit 1
 fi
 
+if [[ -z "$CODEX_BIN" ]]; then
+  echo "ERROR: codex binary not found in PATH. Install codex or set CODEX_BIN."
+  exit 1
+fi
+
 # Default output path
 if [[ -z "$OUTPUT" ]]; then
   OUTPUT="${RESULT_DIR}/${TASK_NAME}.md"
@@ -40,7 +59,7 @@ fi
 mkdir -p "$RESULT_DIR"
 
 # Write task metadata
-STARTED_AT="$(date -Iseconds)"
+STARTED_AT="$(iso_now)"
 jq -n \
   --arg name "$TASK_NAME" \
   --arg prompt "$PROMPT" \
@@ -74,15 +93,25 @@ cat > "$OUTPUT" <<EOF
 ---
 EOF
 
-# Run Codex with timeout
-timeout "${TIMEOUT}" "$CODEX_BIN" exec \
-  --model "$MODEL" \
-  --full-auto \
-  --sandbox "$SANDBOX" \
-  -c 'model_reasoning_effort="low"' \
-  "$SEARCH_INSTRUCTION" 2>&1 | tee "${RESULT_DIR}/task-output.txt"
-
-EXIT_CODE=${PIPESTATUS[0]}
+# Run Codex with timeout when available.
+if [[ -n "$TIMEOUT_BIN" ]]; then
+  "$TIMEOUT_BIN" "${TIMEOUT}" "$CODEX_BIN" exec \
+    --model "$MODEL" \
+    --full-auto \
+    --sandbox "$SANDBOX" \
+    -c 'model_reasoning_effort="low"' \
+    "$SEARCH_INSTRUCTION" 2>&1 | tee "${RESULT_DIR}/task-output.txt"
+  EXIT_CODE=${PIPESTATUS[0]}
+else
+  echo "[codex-deep-search] timeout/gtimeout not found, running without enforced timeout"
+  "$CODEX_BIN" exec \
+    --model "$MODEL" \
+    --full-auto \
+    --sandbox "$SANDBOX" \
+    -c 'model_reasoning_effort="low"' \
+    "$SEARCH_INSTRUCTION" 2>&1 | tee "${RESULT_DIR}/task-output.txt"
+  EXIT_CODE=${PIPESTATUS[0]}
+fi
 
 # Append completion marker
 if [[ -f "$OUTPUT" ]]; then
@@ -90,12 +119,11 @@ if [[ -f "$OUTPUT" ]]; then
 fi
 
 LINES=$(wc -l < "$OUTPUT" 2>/dev/null || echo 0)
-COMPLETED_AT="$(date -Iseconds)"
+COMPLETED_AT="$(iso_now)"
 
 # Calculate duration
-START_TS=$(date -d "$STARTED_AT" +%s 2>/dev/null || echo 0)
 END_TS=$(date +%s)
-ELAPSED=$(( END_TS - START_TS ))
+ELAPSED=$(( END_TS - START_EPOCH ))
 MINS=$(( ELAPSED / 60 ))
 SECS=$(( ELAPSED % 60 ))
 DURATION="${MINS}m${SECS}s"
@@ -142,7 +170,6 @@ fi
 # ---- Wake AGI via /hooks/wake ----
 GATEWAY_PORT="${OPENCLAW_GATEWAY_PORT:-18789}"
 HOOK_TOKEN=""
-OPENCLAW_CONFIG="/home/ubuntu/.openclaw/openclaw.json"
 if [[ -f "$OPENCLAW_CONFIG" ]]; then
   HOOK_TOKEN=$(jq -r '.hooks.token // ""' "$OPENCLAW_CONFIG" 2>/dev/null || echo "")
 fi
