@@ -38,7 +38,7 @@ bash skills/codex-deep-search/scripts/search.sh \
 
 Then read the output file and summarize.
 
-The script auto-discovers its own location and runtime dependencies. You should not need to provide any local absolute paths. It fails fast at startup if required dependencies are missing.
+The script auto-discovers its own location and runtime dependencies. You should not need to provide any local absolute paths. It fails fast at startup if required binaries are missing.
 
 ## Parameters
 
@@ -57,7 +57,7 @@ The script auto-discovers its own location and runtime dependencies. You should 
 - Default result directory is `skills/codex-deep-search/data/codex-search-results`
 - `codex` is discovered from `PATH` and is required
 - `openclaw` is discovered from `PATH` and is required
-- OpenClaw config defaults to `$HOME/.openclaw/openclaw.json` and is required
+- OpenClaw config defaults to `$HOME/.openclaw/openclaw.json`; if `hooks.token` is missing, wake is skipped
 - `timeout` or `gtimeout` is used when available; otherwise the search runs without enforced timeout
 
 ## Result Files
