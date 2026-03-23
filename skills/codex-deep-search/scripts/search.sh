@@ -47,7 +47,31 @@ if [[ -z "$PROMPT" ]]; then
 fi
 
 if [[ -z "$CODEX_BIN" ]]; then
-  echo "ERROR: codex binary not found in PATH. Install codex or set CODEX_BIN."
+  echo "ERROR: codex binary not found in PATH."
+  echo "ERROR: codex is a required dependency for codex-deep-search."
+  echo "ERROR: Install codex or set CODEX_BIN."
+  exit 1
+fi
+
+if [[ -z "$OPENCLAW_BIN" ]]; then
+  echo "ERROR: openclaw binary not found in PATH."
+  echo "ERROR: openclaw is a required dependency for codex-deep-search."
+  echo "ERROR: Install openclaw or set OPENCLAW_BIN."
+  exit 1
+fi
+
+if [[ ! -f "$OPENCLAW_CONFIG" ]]; then
+  echo "ERROR: OpenClaw config not found at $OPENCLAW_CONFIG."
+  echo "ERROR: openclaw config is a required dependency for codex-deep-search."
+  echo "ERROR: Create the config file or set OPENCLAW_CONFIG."
+  exit 1
+fi
+
+HOOK_TOKEN="$(jq -r '.hooks.token // empty' "$OPENCLAW_CONFIG" 2>/dev/null || true)"
+
+if [[ -z "$HOOK_TOKEN" ]]; then
+  echo "ERROR: hooks.token missing in $OPENCLAW_CONFIG."
+  echo "ERROR: openclaw hook configuration is required for codex-deep-search."
   exit 1
 fi
 
@@ -169,10 +193,6 @@ fi
 
 # ---- Wake AGI via /hooks/wake ----
 GATEWAY_PORT="${OPENCLAW_GATEWAY_PORT:-18789}"
-HOOK_TOKEN=""
-if [[ -f "$OPENCLAW_CONFIG" ]]; then
-  HOOK_TOKEN=$(jq -r '.hooks.token // ""' "$OPENCLAW_CONFIG" 2>/dev/null || echo "")
-fi
 
 if [[ -n "$HOOK_TOKEN" ]]; then
   WAKE_TEXT="[DEEP_SEARCH_DONE] task=${TASK_NAME} output=${OUTPUT} lines=${LINES} duration=${DURATION} status=$(jq -r '.status' "${RESULT_DIR}/latest-meta.json" 2>/dev/null)"
