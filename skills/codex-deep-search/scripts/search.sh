@@ -1,19 +1,123 @@
 #!/usr/bin/env bash
-# Deep search via Codex CLI with dispatch pattern (background + Telegram callback)
+# Deep search via Codex CLI in synchronous mode.
 set -euo pipefail
 
-RESULT_DIR="/home/ubuntu/clawd/data/codex-search-results"
-OPENCLAW_BIN="/home/ubuntu/.npm-global/bin/openclaw"
-CODEX_BIN="${CODEX_BIN:-/home/ubuntu/.npm-global/bin/codex}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+SKILL_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+RESULT_DIR="${SKILL_DIR}/data/codex-search-results"
 
-# Defaults
 PROMPT=""
 OUTPUT=""
 MODEL="gpt-5.3-codex"
 SANDBOX="workspace-write"
 TIMEOUT=120
-TELEGRAM_GROUP=""
 TASK_NAME="search-$(date +%s)"
+
+resolve_codex_bin() {
+  local candidate=""
+  local node_bin=""
+  local npm_root=""
+  local npm_bin=""
+  local nvm_candidate=""
+
+  if [[ -n "${CODEX_BIN:-}" ]] && [[ -x "${CODEX_BIN}" ]]; then
+    printf '%s\n' "${CODEX_BIN}"
+    return 0
+  fi
+
+  if candidate="$(command -v codex 2>/dev/null)"; then
+    printf '%s\n' "${candidate}"
+    return 0
+  fi
+
+  if node_bin="$(command -v node 2>/dev/null)"; then
+    candidate="$(dirname "${node_bin}")/codex"
+    if [[ -x "${candidate}" ]]; then
+      printf '%s\n' "${candidate}"
+      return 0
+    fi
+  fi
+
+  if npm_root="$(npm root -g 2>/dev/null)"; then
+    npm_bin="$(cd "${npm_root}/.." 2>/dev/null && pwd)/bin/codex"
+    if [[ -x "${npm_bin}" ]]; then
+      printf '%s\n' "${npm_bin}"
+      return 0
+    fi
+  fi
+
+  if [[ -n "${NVM_DIR:-}" ]] && node_bin="$(command -v node 2>/dev/null)"; then
+    nvm_candidate="${NVM_DIR}/versions/node/$(node -v)/bin/codex"
+    if [[ -x "${nvm_candidate}" ]]; then
+      printf '%s\n' "${nvm_candidate}"
+      return 0
+    fi
+  fi
+
+  return 1
+}
+
+run_with_timeout() {
+  local seconds="$1"
+  shift
+
+  if command -v timeout >/dev/null 2>&1; then
+    timeout "${seconds}" "$@"
+    return $?
+  fi
+
+  if command -v gtimeout >/dev/null 2>&1; then
+    gtimeout "${seconds}" "$@"
+    return $?
+  fi
+
+  if command -v python3 >/dev/null 2>&1; then
+    python3 - "${seconds}" "$@" <<'PY'
+import os
+import signal
+import subprocess
+import sys
+
+timeout_seconds = int(sys.argv[1])
+cmd = sys.argv[2:]
+
+proc = subprocess.Popen(cmd)
+try:
+    proc.wait(timeout=timeout_seconds)
+    sys.exit(proc.returncode)
+except subprocess.TimeoutExpired:
+    proc.send_signal(signal.SIGTERM)
+    try:
+        proc.wait(timeout=5)
+    except subprocess.TimeoutExpired:
+        proc.kill()
+        proc.wait()
+    sys.exit(124)
+PY
+    return $?
+  fi
+
+  echo "ERROR: timeout requested but no timeout runner is available" >&2
+  return 1
+}
+
+format_duration() {
+  local elapsed="$1"
+  local mins=$(( elapsed / 60 ))
+  local secs=$(( elapsed % 60 ))
+  printf '%sm%ss\n' "${mins}" "${secs}"
+}
+
+status_from_exit() {
+  local exit_code="$1"
+  if [[ "${exit_code}" == "0" ]]; then
+    printf 'done\n'
+  elif [[ "${exit_code}" == "124" ]]; then
+    printf 'timeout\n'
+  else
+    printf 'failed\n'
+  fi
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -21,140 +125,105 @@ while [[ $# -gt 0 ]]; do
     --output) OUTPUT="$2"; shift 2;;
     --model) MODEL="$2"; shift 2;;
     --timeout) TIMEOUT="$2"; shift 2;;
-    --telegram-group) TELEGRAM_GROUP="$2"; shift 2;;
     --task-name) TASK_NAME="$2"; shift 2;;
     *) echo "Unknown flag: $1"; exit 1;;
   esac
 done
 
-if [[ -z "$PROMPT" ]]; then
+if [[ -z "${PROMPT}" ]]; then
   echo "ERROR: --prompt is required"
   exit 1
 fi
 
-# Default output path
-if [[ -z "$OUTPUT" ]]; then
+if [[ -z "${OUTPUT}" ]]; then
   OUTPUT="${RESULT_DIR}/${TASK_NAME}.md"
 fi
 
-mkdir -p "$RESULT_DIR"
+OUTPUT_DIR="$(dirname "${OUTPUT}")"
+mkdir -p "${RESULT_DIR}" "${OUTPUT_DIR}"
 
-# Write task metadata
+if ! CODEX_BIN_RESOLVED="$(resolve_codex_bin)"; then
+  echo "FALLBACK_TO_DEFAULT_SEARCH: codex_unavailable"
+  echo "[codex-deep-search] Codex CLI not found. Fall back to default search."
+  exit 69
+fi
+
+START_TS="$(date +%s)"
 STARTED_AT="$(date -Iseconds)"
+
 jq -n \
-  --arg name "$TASK_NAME" \
-  --arg prompt "$PROMPT" \
-  --arg output "$OUTPUT" \
-  --arg ts "$STARTED_AT" \
-  '{task_name: $name, prompt: $prompt, output: $output, started_at: $ts, status: "running"}' \
+  --arg name "${TASK_NAME}" \
+  --arg prompt "${PROMPT}" \
+  --arg output "${OUTPUT}" \
+  --arg ts "${STARTED_AT}" \
+  --arg codex_bin "${CODEX_BIN_RESOLVED}" \
+  '{task_name: $name, prompt: $prompt, output: $output, started_at: $ts, codex_bin: $codex_bin, status: "running"}' \
   > "${RESULT_DIR}/latest-meta.json"
 
 SEARCH_INSTRUCTION="You are a research assistant. Search the web for the following query.
 
 CRITICAL RULES:
-1. Write findings to $OUTPUT INCREMENTALLY — after EACH search, append what you found immediately. Do NOT wait until the end.
+1. Write findings to ${OUTPUT} INCREMENTALLY — after EACH search, append what you found immediately. Do NOT wait until the end.
 2. Start the file with a title and query, then append sections as you discover them.
 3. Keep searches focused — max 8 web searches. Synthesize what you have, don't over-research.
 4. Include source URLs inline.
 5. End with a brief summary section.
 
-Query: $PROMPT
+Query: ${PROMPT}
 
 Start by writing the file header NOW, then search and append."
 
-echo "[codex-deep-search] Task: $TASK_NAME"
-echo "[codex-deep-search] Output: $OUTPUT"
-echo "[codex-deep-search] Model: $MODEL | Reasoning: low | Timeout: ${TIMEOUT}s"
+echo "[codex-deep-search] Task: ${TASK_NAME}"
+echo "[codex-deep-search] Output: ${OUTPUT}"
+echo "[codex-deep-search] Codex: ${CODEX_BIN_RESOLVED}"
+echo "[codex-deep-search] Model: ${MODEL} | Reasoning: low | Timeout: ${TIMEOUT}s"
 
-# Pre-create output file
-cat > "$OUTPUT" <<EOF
+cat > "${OUTPUT}" <<EOF
 # Deep Search Report
-**Query:** $PROMPT
+**Query:** ${PROMPT}
 **Status:** In progress...
 ---
 EOF
 
-# Run Codex with timeout
-timeout "${TIMEOUT}" "$CODEX_BIN" exec \
-  --model "$MODEL" \
+set +e
+run_with_timeout "${TIMEOUT}" \
+  "${CODEX_BIN_RESOLVED}" \
+  --search \
+  exec \
+  --model "${MODEL}" \
   --full-auto \
-  --sandbox "$SANDBOX" \
+  --sandbox "${SANDBOX}" \
   -c 'model_reasoning_effort="low"' \
-  "$SEARCH_INSTRUCTION" 2>&1 | tee "${RESULT_DIR}/task-output.txt"
+  "${SEARCH_INSTRUCTION}"
+EXIT_CODE=$?
+set -e
 
-EXIT_CODE=${PIPESTATUS[0]}
-
-# Append completion marker
-if [[ -f "$OUTPUT" ]]; then
-  echo -e "\n---\n_Search completed at $(date -u)_" >> "$OUTPUT"
+if [[ -f "${OUTPUT}" ]]; then
+  echo -e "\n---\n_Search completed at $(date -u)_" >> "${OUTPUT}"
 fi
 
-LINES=$(wc -l < "$OUTPUT" 2>/dev/null || echo 0)
+LINES=$(wc -l < "${OUTPUT}" 2>/dev/null || echo 0)
+END_TS="$(date +%s)"
 COMPLETED_AT="$(date -Iseconds)"
-
-# Calculate duration
-START_TS=$(date -d "$STARTED_AT" +%s 2>/dev/null || echo 0)
-END_TS=$(date +%s)
 ELAPSED=$(( END_TS - START_TS ))
-MINS=$(( ELAPSED / 60 ))
-SECS=$(( ELAPSED % 60 ))
-DURATION="${MINS}m${SECS}s"
+DURATION="$(format_duration "${ELAPSED}")"
+STATUS="$(status_from_exit "${EXIT_CODE}")"
 
-# Update metadata
 jq -n \
-  --arg name "$TASK_NAME" \
-  --arg prompt "$PROMPT" \
-  --arg output "$OUTPUT" \
-  --arg started "$STARTED_AT" \
-  --arg completed "$COMPLETED_AT" \
-  --arg duration "$DURATION" \
-  --arg lines "$LINES" \
-  --argjson exit_code "$EXIT_CODE" \
-  '{task_name: $name, prompt: $prompt, output: $output, started_at: $started, completed_at: $completed, duration: $duration, lines: ($lines|tonumber), exit_code: $exit_code, status: (if $exit_code == 0 then "done" elif $exit_code == 124 then "timeout" else "failed" end)}' \
+  --arg name "${TASK_NAME}" \
+  --arg prompt "${PROMPT}" \
+  --arg output "${OUTPUT}" \
+  --arg started "${STARTED_AT}" \
+  --arg completed "${COMPLETED_AT}" \
+  --arg duration "${DURATION}" \
+  --arg lines "${LINES}" \
+  --arg codex_bin "${CODEX_BIN_RESOLVED}" \
+  --argjson exit_code "${EXIT_CODE}" \
+  --arg status "${STATUS}" \
+  '{task_name: $name, prompt: $prompt, output: $output, started_at: $started, completed_at: $completed, duration: $duration, lines: ($lines|tonumber), exit_code: $exit_code, codex_bin: $codex_bin, status: $status}' \
   > "${RESULT_DIR}/latest-meta.json"
 
 echo "[codex-deep-search] Done (${DURATION}, exit=${EXIT_CODE}, ${LINES} lines)"
+echo "[codex-deep-search] Result file: ${OUTPUT}"
 
-# Send Telegram notification if configured
-if [[ -n "$TELEGRAM_GROUP" ]] && [[ -x "$OPENCLAW_BIN" ]]; then
-  STATUS_EMOJI="✅"
-  [[ "$EXIT_CODE" == "124" ]] && STATUS_EMOJI="⏱"
-  [[ "$EXIT_CODE" != "0" ]] && [[ "$EXIT_CODE" != "124" ]] && STATUS_EMOJI="❌"
-
-  # Extract summary (first 800 chars of result file, skip header)
-  SUMMARY=$(sed -n '5,30p' "$OUTPUT" 2>/dev/null | head -c 800 || echo "No results")
-
-  MSG="${STATUS_EMOJI} *Deep Search 完成*
-
-🔍 *查询:* ${PROMPT}
-⏱ *耗时:* ${DURATION} | 📄 ${LINES} 行
-📂 \`${OUTPUT}\`
-
-📝 *摘要:*
-${SUMMARY}"
-
-  "$OPENCLAW_BIN" message send \
-    --channel telegram \
-    --target "$TELEGRAM_GROUP" \
-    --message "$MSG" 2>/dev/null || echo "[codex-deep-search] Telegram notification failed"
-fi
-
-# ---- Wake AGI via /hooks/wake ----
-GATEWAY_PORT="${OPENCLAW_GATEWAY_PORT:-18789}"
-HOOK_TOKEN=""
-OPENCLAW_CONFIG="/home/ubuntu/.openclaw/openclaw.json"
-if [[ -f "$OPENCLAW_CONFIG" ]]; then
-  HOOK_TOKEN=$(jq -r '.hooks.token // ""' "$OPENCLAW_CONFIG" 2>/dev/null || echo "")
-fi
-
-if [[ -n "$HOOK_TOKEN" ]]; then
-  WAKE_TEXT="[DEEP_SEARCH_DONE] task=${TASK_NAME} output=${OUTPUT} lines=${LINES} duration=${DURATION} status=$(jq -r '.status' "${RESULT_DIR}/latest-meta.json" 2>/dev/null)"
-  HTTP_CODE=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
-    "http://localhost:${GATEWAY_PORT}/hooks/wake" \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer ${HOOK_TOKEN}" \
-    -d "{\"text\":\"${WAKE_TEXT}\",\"mode\":\"now\"}" 2>/dev/null)
-  echo "[codex-deep-search] Wake sent (HTTP ${HTTP_CODE})"
-else
-  echo "[codex-deep-search] No hook token, skipping wake"
-fi
+exit "${EXIT_CODE}"

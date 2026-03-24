@@ -15,28 +15,26 @@ Use Codex CLI's web search capability for research tasks needing more depth than
 
 ## Usage
 
-### Dispatch Mode (recommended — background + callback)
+This skill is synchronous only. Call the script, wait for it to finish, then read the output file and summarize the result back to the user.
 
 ```bash
-nohup bash /home/ubuntu/clawd/skills/codex-deep-search/scripts/search.sh \
-  --prompt "Your research query" \
-  --task-name "notebooklm-research" \
-  --telegram-group "-5006066016" \
-  --timeout 120 > /tmp/codex-search.log 2>&1 &
-```
-
-After dispatch: tell user search is running, results will arrive via Telegram. Do NOT poll.
-
-### Synchronous Mode (short queries only)
-
-```bash
-bash /home/ubuntu/clawd/skills/codex-deep-search/scripts/search.sh \
-  --prompt "Quick factual query" \
+bash /path/to/codex-deep-search/scripts/search.sh \
+  --prompt "Deep research query" \
   --output "/tmp/search-result.md" \
-  --timeout 60
+  --task-name "topic-research" \
+  --timeout 120
 ```
 
-Then read the output file and summarize.
+The script prints progress to stdout and writes the final report to the output file.
+
+## Fallback
+
+If the script cannot find a usable `codex` binary, it will:
+
+- print `FALLBACK_TO_DEFAULT_SEARCH: codex_unavailable`
+- exit with code `69`
+
+When that happens, the main agent should tell the user Codex deep search is unavailable on this machine and fall back to the default web search flow instead of retrying this skill.
 
 ## Parameters
 
@@ -44,8 +42,7 @@ Then read the output file and summarize.
 |------|----------|---------|-------------|
 | `--prompt` | Yes | — | Research query |
 | `--output` | No | `data/codex-search-results/<task>.md` | Output file path |
-| `--task-name` | No | `search-<timestamp>` | Task identifier |
-| `--telegram-group` | No | — | Telegram chat ID for callback |
+| `--task-name` | No | `search-<timestamp>` | Task identifier used for the default output file name |
 | `--model` | No | `gpt-5.3-codex` | Model override |
 | `--timeout` | No | `120` | Seconds before auto-stop |
 
@@ -53,13 +50,13 @@ Then read the output file and summarize.
 
 | File | Content |
 |------|---------|
-| `data/codex-search-results/<task>.md` | Search report (incremental) |
-| `data/codex-search-results/latest-meta.json` | Task metadata + status |
-| `data/codex-search-results/task-output.txt` | Raw Codex output |
+| `data/codex-search-results/<task>.md` | Search report (incremental + final summary) |
+| `data/codex-search-results/latest-meta.json` | Task metadata, status, duration, output path, and resolved codex path |
 
 ## Key Design
 
-- **Incremental writes** — results saved after each search round, survives OOM/timeout
-- **Low reasoning effort** — reduces memory, prevents OOM SIGKILL
-- **Timeout protection** — auto-stops runaway searches
-- **Dispatch pattern** — background execution with Telegram callback, no polling
+- **Synchronous execution** — caller waits for completion and then reads the result file
+- **Incremental writes** — results are written while the search is running
+- **Low reasoning effort** — reduces memory pressure during long searches
+- **Portable timeout** — uses available timeout tooling on Linux/macOS
+- **Explicit fallback** — missing Codex binary returns a machine-readable fallback signal
