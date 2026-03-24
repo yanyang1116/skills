@@ -1,6 +1,6 @@
 ---
 name: codex-deep-search
-description: Deep web search using Codex CLI for complex queries that need multi-source synthesis. Use when web_search (Brave) returns insufficient results, when the user asks for in-depth research, comprehensive analysis, or says "deep search", "详细搜索", "帮我查一下", or when a topic needs following multiple links and cross-referencing sources. - fork from @AIsuperdomain
+description: Deep web search using Codex CLI for complex queries that need multi-source synthesis. Use when web_search (Brave) returns insufficient results, when the user asks for in-depth research, comprehensive analysis, or says "deep search", "详细搜索", "帮我查一下", or when a topic needs following multiple links and cross-referencing sources.
 ---
 
 # Codex Deep Search
@@ -18,7 +18,7 @@ Use Codex CLI's web search capability for research tasks needing more depth than
 ### Dispatch Mode (recommended — background + callback)
 
 ```bash
-nohup bash skills/codex-deep-search/scripts/search.sh \
+nohup bash /home/ubuntu/clawd/skills/codex-deep-search/scripts/search.sh \
   --prompt "Your research query" \
   --task-name "notebooklm-research" \
   --telegram-group "-5006066016" \
@@ -30,15 +30,13 @@ After dispatch: tell user search is running, results will arrive via Telegram. D
 ### Synchronous Mode (short queries only)
 
 ```bash
-bash skills/codex-deep-search/scripts/search.sh \
+bash /home/ubuntu/clawd/skills/codex-deep-search/scripts/search.sh \
   --prompt "Quick factual query" \
   --output "/tmp/search-result.md" \
   --timeout 60
 ```
 
 Then read the output file and summarize.
-
-The script auto-discovers its own location and runtime dependencies. You should not need to provide any local absolute paths. It fails fast at startup if required binaries are missing.
 
 ## Parameters
 
@@ -50,15 +48,6 @@ The script auto-discovers its own location and runtime dependencies. You should 
 | `--telegram-group` | No | — | Telegram chat ID for callback |
 | `--model` | No | `gpt-5.3-codex` | Model override |
 | `--timeout` | No | `120` | Seconds before auto-stop |
-
-## Runtime Discovery
-
-- Script location is derived automatically from `search.sh`
-- Default result directory is `skills/codex-deep-search/data/codex-search-results`
-- `codex` is discovered from `PATH` and is required
-- `openclaw` is discovered from `PATH` and is required
-- OpenClaw config defaults to `$HOME/.openclaw/openclaw.json`; if `hooks.token` is missing, wake is skipped
-- `timeout` or `gtimeout` is used when available; otherwise the search runs without enforced timeout
 
 ## Result Files
 
