@@ -22,7 +22,7 @@ bash /path/to/codex-deep-search/scripts/search.sh \
   --prompt "Deep research query" \
   --output "/tmp/search-result.md" \
   --task-name "topic-research" \
-  --timeout 120
+  --timeout 600
 ```
 
 The script prints progress to stdout and writes the final report to the output file.
@@ -44,7 +44,7 @@ When that happens, the main agent should tell the user Codex deep search is unav
 | `--output` | No | `data/codex-search-results/<task>.md` | Output file path |
 | `--task-name` | No | `search-<timestamp>` | Task identifier used for the default output file name |
 | `--model` | No | `gpt-5.3-codex` | Model override |
-| `--timeout` | No | `120` | Seconds before auto-stop |
+| `--timeout` | No | `600` | Seconds before auto-stop |
 
 ## Result Files
 

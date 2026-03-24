@@ -10,7 +10,7 @@ PROMPT=""
 OUTPUT=""
 MODEL="gpt-5.3-codex"
 SANDBOX="workspace-write"
-TIMEOUT=120
+TIMEOUT=600
 TASK_NAME="search-$(date +%s)"
 
 resolve_codex_bin() {
