@@ -1,6 +1,6 @@
 ---
 name: yy-openclaw-skills-sync-private
-description: Private skill for Young's OpenClaw setup. Use when the user says 更新 skill, 同步 skill, 安装 skill, reinstall skills, or asks to sync/install all OpenClaw skills from Young's personal local source tree. This skill is intentionally hard-coded for Young's machine and should not be reused as a general-purpose installer.
+description: Private skill for Young's OpenClaw setup. Use this whenever Young asks to 更新 skill, 同步 skill, 安装 skill, reinstall skills, sync all skills, resync OpenClaw skills, reinstall my OpenClaw skills, or says natural variants like “更新一下”, “同步一下我的 skill”, “把那些 skill 重新装一遍”, “把我的 OpenClaw skills 装一下”, or “install/sync my skills”. Treat all of these as the same request: scan Young's personal local source tree under `skills/openclaw`, derive the matching GitHub URLs from each local directory name, and reinstall every discovered skill globally for the OpenClaw agent. This skill is intentionally hard-coded for Young's machine and should not be reused as a general-purpose installer.
 ---
 
 # YY OpenClaw Skills Sync Private
@@ -26,10 +26,17 @@ Use this skill whenever Young says things like:
 - “更新 skill”
 - “同步 skill”
 - “安装 skill”
+- “更新一下”
+- “同步一下”
+- “同步一下我的 skill”
+- “把那些 skill 重新装一遍”
 - “把我的 OpenClaw skills 装一下”
+- “把 openclaw 那些 skill 同步一下”
 - “重新安装一下那些 skill”
 - “sync my OpenClaw skills”
 - “reinstall all my OpenClaw skills”
+- “install/sync my skills”
+- “resync all my OpenClaw skills”
 
 Treat these phrases as the same request:
 
