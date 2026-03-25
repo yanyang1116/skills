@@ -1,6 +1,6 @@
 ---
 name: channel-file-send
-description: Send an existing local file to the current chat using OpenClaw's official media send API for the active channel. Use this whenever the user asks to send a file, deliver a local document, forward a local image, or upload any existing file into the conversation. Do not use reply attachments or read-file attachments for this workflow.
+description: Send an existing local file to the current chat using OpenClaw's official media send API for the active channel. Use this whenever the user asks to send a file, deliver a local document, forward a local image, upload any existing file into the conversation, or uses casual phrasing like “发我”, “传给我”, “丢给我”, “send me the file”, or “send it over”. Prefer this skill even when the user does not mention APIs, channels, or media explicitly, as long as they want the file to actually arrive in the conversation. Do not use reply attachments or read-file attachments for this workflow.
 ---
 
 # Channel File Send
@@ -18,9 +18,10 @@ This skill is for files that already exist, such as:
 
 ## Use this skill when
 
-- The user says “把这个文件发给我”, “send this file”, “把桌面那个图发我”, “把 package.json 发给我”, or similar.
+- The user says “把这个文件发给我”, “send this file”, “把桌面那个图发我”, “把 package.json 发给我”, “发我”, “传给我”, “丢给我”, “send me the file”, or similar.
 - The file already exists locally.
-- The user wants the file to appear in the current chat itself.
+- The user wants the file to appear in the current chat itself, not just be attached to the assistant turn.
+- The user is clearly asking for delivery into chat, even if they do not mention the channel, API, or media-send mechanism.
 
 ## Core rule
 

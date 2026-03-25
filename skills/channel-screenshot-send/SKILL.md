@@ -1,6 +1,6 @@
 ---
 name: channel-screenshot-send
-description: Capture a fresh screenshot and send it into the current chat using OpenClaw's official media send API for the active channel. Use this whenever the user asks to screenshot the screen and send it, capture then send, send the current screen, or wants a screenshot delivered into chat instead of attached to the model reply. Do not use read-image reply attachments for this workflow.
+description: Capture a fresh screenshot and send it into the current chat using OpenClaw's official media send API for the active channel. Use this whenever the user asks to screenshot the screen and send it, capture then send, send the current screen, send a screenshot here, upload the screen into chat, or uses casual phrasing like “发我截图”, “把屏幕发来”, “send it over”, or “丢到聊天里”. Prefer this skill even when the user does not mention APIs, channels, or media explicitly, as long as they want the screenshot to actually arrive in the conversation. Do not use read-image reply attachments for this workflow.
 ---
 
 # Channel Screenshot Send
@@ -11,8 +11,9 @@ This skill exists because **reply attachments are not the same as channel outbou
 
 ## Use this skill when
 
-- The user says things like “截个图发我”, “把屏幕发我”, “screenshot and send”, or “capture the screen and send it”.
-- The user wants the screenshot to appear in the current conversation itself.
+- The user says things like “截个图发我”, “把屏幕发我”, “把当前屏幕发来”, “发我截图”, “上传这个屏幕到聊天里”, “screenshot and send”, “capture the screen and send it”, or “send it over”.
+- The user wants the screenshot to appear in the current conversation itself, not just be visible to the model.
+- The user is clearly asking for delivery into chat, even if they do not mention the channel, API, or media-send mechanism.
 - You need the most reliable path for sending screenshots into chat.
 
 ## Core rule
