@@ -10,8 +10,9 @@ PROMPT=""
 OUTPUT=""
 MODEL="gpt-5.3-codex"
 SANDBOX="workspace-write"
-TIMEOUT=600
+TIMEOUT=1200
 TASK_NAME="search-$(date +%s)"
+TEMP_WORKSPACE=""
 
 resolve_codex_bin() {
   local candidate=""
@@ -101,6 +102,17 @@ PY
   return 1
 }
 
+create_temp_workspace() {
+  local base_tmp="${TMPDIR:-/tmp}"
+  mktemp -d "${base_tmp%/}/codex-deep-search.XXXXXX"
+}
+
+cleanup() {
+  if [[ -n "${TEMP_WORKSPACE}" ]] && [[ -d "${TEMP_WORKSPACE}" ]]; then
+    rm -rf "${TEMP_WORKSPACE}"
+  fi
+}
+
 format_duration() {
   local elapsed="$1"
   local mins=$(( elapsed / 60 ))
@@ -148,6 +160,9 @@ if ! CODEX_BIN_RESOLVED="$(resolve_codex_bin)"; then
   exit 69
 fi
 
+TEMP_WORKSPACE="$(create_temp_workspace)"
+trap cleanup EXIT
+
 START_TS="$(date +%s)"
 STARTED_AT="$(date -Iseconds)"
 
@@ -157,17 +172,19 @@ jq -n \
   --arg output "${OUTPUT}" \
   --arg ts "${STARTED_AT}" \
   --arg codex_bin "${CODEX_BIN_RESOLVED}" \
-  '{task_name: $name, prompt: $prompt, output: $output, started_at: $ts, codex_bin: $codex_bin, status: "running"}' \
+  --arg workspace_dir "${TEMP_WORKSPACE}" \
+  '{task_name: $name, prompt: $prompt, output: $output, started_at: $ts, codex_bin: $codex_bin, workspace_dir: $workspace_dir, status: "running"}' \
   > "${RESULT_DIR}/latest-meta.json"
 
 SEARCH_INSTRUCTION="You are a research assistant. Search the web for the following query.
 
 CRITICAL RULES:
-1. Write findings to ${OUTPUT} INCREMENTALLY — after EACH search, append what you found immediately. Do NOT wait until the end.
-2. Start the file with a title and query, then append sections as you discover them.
-3. Keep searches focused — max 8 web searches. Synthesize what you have, don't over-research.
-4. Include source URLs inline.
-5. End with a brief summary section.
+1. Do NOT read unrelated local workspace files or project instruction files unless the user explicitly asks for them.
+2. Write findings to ${OUTPUT} INCREMENTALLY — after EACH search, append what you found immediately. Do NOT wait until the end.
+3. Start the file with a title and query, then append sections as you discover them.
+4. Keep searches focused — max 8 web searches. Synthesize what you have, don't over-research.
+5. Include source URLs inline.
+6. End with a brief summary section.
 
 Query: ${PROMPT}
 
@@ -175,6 +192,7 @@ Start by writing the file header NOW, then search and append."
 
 echo "[codex-deep-search] Task: ${TASK_NAME}"
 echo "[codex-deep-search] Output: ${OUTPUT}"
+echo "[codex-deep-search] Workspace: ${TEMP_WORKSPACE}"
 echo "[codex-deep-search] Codex: ${CODEX_BIN_RESOLVED}"
 echo "[codex-deep-search] Model: ${MODEL} | Reasoning: low | Timeout: ${TIMEOUT}s"
 
@@ -188,11 +206,14 @@ EOF
 set +e
 run_with_timeout "${TIMEOUT}" \
   "${CODEX_BIN_RESOLVED}" \
+  -C "${TEMP_WORKSPACE}" \
   --search \
   exec \
+  --skip-git-repo-check \
   --model "${MODEL}" \
   --full-auto \
   --sandbox "${SANDBOX}" \
+  --add-dir "${OUTPUT_DIR}" \
   -c 'model_reasoning_effort="low"' \
   "${SEARCH_INSTRUCTION}"
 EXIT_CODE=$?
@@ -218,9 +239,10 @@ jq -n \
   --arg duration "${DURATION}" \
   --arg lines "${LINES}" \
   --arg codex_bin "${CODEX_BIN_RESOLVED}" \
+  --arg workspace_dir "${TEMP_WORKSPACE}" \
   --argjson exit_code "${EXIT_CODE}" \
   --arg status "${STATUS}" \
-  '{task_name: $name, prompt: $prompt, output: $output, started_at: $started, completed_at: $completed, duration: $duration, lines: ($lines|tonumber), exit_code: $exit_code, codex_bin: $codex_bin, status: $status}' \
+  '{task_name: $name, prompt: $prompt, output: $output, started_at: $started, completed_at: $completed, duration: $duration, lines: ($lines|tonumber), exit_code: $exit_code, codex_bin: $codex_bin, workspace_dir: $workspace_dir, status: $status}' \
   > "${RESULT_DIR}/latest-meta.json"
 
 echo "[codex-deep-search] Done (${DURATION}, exit=${EXIT_CODE}, ${LINES} lines)"

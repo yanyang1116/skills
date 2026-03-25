@@ -22,7 +22,7 @@ bash /path/to/codex-deep-search/scripts/search.sh \
   --prompt "Deep research query" \
   --output "/tmp/search-result.md" \
   --task-name "topic-research" \
-  --timeout 600
+  --timeout 1200
 ```
 
 The script prints progress to stdout and writes the final report to the output file.
@@ -44,18 +44,19 @@ When that happens, the main agent should tell the user Codex deep search is unav
 | `--output` | No | `data/codex-search-results/<task>.md` | Output file path |
 | `--task-name` | No | `search-<timestamp>` | Task identifier used for the default output file name |
 | `--model` | No | `gpt-5.3-codex` | Model override |
-| `--timeout` | No | `600` | Seconds before auto-stop |
+| `--timeout` | No | `1200` | Seconds before auto-stop |
 
 ## Result Files
 
 | File | Content |
 |------|---------|
 | `data/codex-search-results/<task>.md` | Search report (incremental + final summary) |
-| `data/codex-search-results/latest-meta.json` | Task metadata, status, duration, output path, and resolved codex path |
+| `data/codex-search-results/latest-meta.json` | Task metadata, status, duration, output path, resolved codex path, and workspace dir |
 
 ## Key Design
 
 - **Synchronous execution** — caller waits for completion and then reads the result file
+- **Workspace isolation** — each run starts Codex in a clean temporary workspace and only exposes the output directory
 - **Incremental writes** — results are written while the search is running
 - **Low reasoning effort** — reduces memory pressure during long searches
 - **Portable timeout** — uses available timeout tooling on Linux/macOS
