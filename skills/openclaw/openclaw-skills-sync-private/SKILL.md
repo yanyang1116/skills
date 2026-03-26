@@ -13,7 +13,7 @@ description: >
   reused as a general-purpose installer.
 ---
 
-# YY OpenClaw Skills Sync Private
+# OpenClaw Skills Sync Private
 
 Private utility skill for Young's personal machine.
 

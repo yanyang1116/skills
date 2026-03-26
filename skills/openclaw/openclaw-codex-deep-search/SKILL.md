@@ -3,7 +3,7 @@ name: openclaw-codex-deep-search
 description: Deep web search using Codex CLI for complex queries that need multi-source synthesis. Use when web_search (Brave) returns insufficient results, when the user asks for in-depth research, comprehensive analysis, or says "deep search", "详细搜索", "帮我查一下", or when a topic needs following multiple links and cross-referencing sources.
 ---
 
-# Codex Deep Search
+# OpenClaw Codex Deep Search
 
 Use Codex CLI's web search capability for research tasks needing more depth than Brave API snippets.
 

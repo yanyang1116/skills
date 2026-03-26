@@ -3,7 +3,7 @@ name: openclaw-channel-screenshot-send
 description: Capture a fresh screenshot and send it into the current chat using OpenClaw's official media send API for the active channel. Use this whenever the user asks to screenshot the screen and send it, capture then send, send the current screen, send a screenshot here, upload the screen into chat, or uses casual phrasing like “发我截图”, “把屏幕发来”, “send it over”, or “丢到聊天里”. Prefer this skill even when the user does not mention APIs, channels, or media explicitly, as long as they want the screenshot to actually arrive in the conversation. Do not use read-image reply attachments for this workflow.
 ---
 
-# Channel Screenshot Send
+# OpenClaw Channel Screenshot Send
 
 Capture a screenshot, save it briefly to a temporary local file, send it through OpenClaw's official outbound media path for the current channel, then delete the temporary file.
 
