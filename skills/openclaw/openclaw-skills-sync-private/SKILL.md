@@ -1,5 +1,5 @@
 ---
-name: yy-openclaw-skills-sync-private
+name: openclaw-skills-sync-private
 description: >
   Private skill for Young's OpenClaw setup. Use this whenever Young asks to 更新
   skill, 同步 skill, 安装 skill, reinstall skills, sync all skills, resync
