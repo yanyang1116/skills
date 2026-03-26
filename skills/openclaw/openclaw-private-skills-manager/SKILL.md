@@ -1,5 +1,5 @@
 ---
-name: openclaw-skills-sync-private
+name: openclaw-private-skills-manager
 description: >
   Private skill for Young's personal skills workflow. Use this whenever Young
   asks to install a public skill from a git URL, update installed public
@@ -12,7 +12,7 @@ description: >
   flow intact.
 ---
 
-# OpenClaw Skills Sync Private
+# OpenClaw Private Skills Manager
 
 Private routing skill for Young's personal skills workflow.
 
