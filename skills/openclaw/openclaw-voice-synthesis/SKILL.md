@@ -1,6 +1,6 @@
 ---
 name: openclaw-voice-synthesis
-description: Generate local text-to-speech audio on macOS and use it as a reusable voice artifact for chat delivery or downstream workflows. Use this whenever the user asks you to synthesize speech, turn text into a spoken audio file, make a voice sample, test different system voices, preview voice lines, or create short spoken clips such as “给我合成一段语音”, “做个 voice sample”, “把这句话转成语音”, “试几个声线”, “生成一条可发送的语音”, or similar. Prefer this skill when the real output is a local audio file, even if the user does not mention TTS, file formats, or macOS commands explicitly.
+description: Generate local text-to-speech audio on macOS and save it as a reusable spoken audio file, typically `.wav`. Use this whenever the user asks you to synthesize speech, turn text into audio, make a spoken clip, or create a local voice file such as “把这句话转成语音”, “给我合成一段语音”, “生成一个 wav 文件”, or similar. Prefer this skill when the real output is a local audio artifact, even if the user does not mention TTS, file formats, or macOS commands explicitly.
 ---
 
 # OpenClaw Voice Synthesis
@@ -17,13 +17,11 @@ Use macOS built-in tools to produce a spoken audio artifact:
 - `say` for text-to-speech generation
 - `afconvert` for converting the result into a more convenient output format such as `.wav`
 
-This is useful for:
+This skill is for:
 
-- quick spoken replies
-- TTS test clips
-- voice/sample comparison
-- generating a reusable audio file for later delivery
-- validating whether a given system voice is acceptable
+- turning text into speech
+- generating a reusable local audio file
+- preparing a voice file for later delivery or reuse
 
 ## Use this skill when
 
@@ -31,19 +29,15 @@ Trigger this skill when the user wants any of the following:
 
 - synthesize a spoken clip from text
 - create a local `.wav` or other audio file from text
-- test several macOS system voices
-- compare voice options by number or name
 - produce a short voice line for later sending
 - build a repeatable local TTS workflow
 
 Examples of likely requests:
 
 - “把这句话转成语音”
-- “给我合成一条 voice”
-- “做几个不同声线让我试听”
+- “给我合成一段语音”
 - “生成一个 wav 文件”
-- “给这段文案做个语音样本”
-- “试一下系统自带 voice”
+- “给这段文案做个语音文件”
 
 ## Core workflow
 
@@ -75,55 +69,12 @@ Why:
 
 If the user needs another format, say so clearly and convert accordingly.
 
-## Voice selection
-
-If the user asks to inspect available voices, list them with:
-
-```bash
-say -v '?'
-```
-
-Important practical note:
-
-- macOS exposes many entries, but many are language-region variants rather than truly distinct voice designs
-- do not imply that all listed entries are equally suitable for Chinese or for a “professional bot” style
-- if the user wants to compare voices, generate short samples using the **same text** and label them clearly by order or name
-
-## Sample-comparison workflow
-
-When the user wants to audition voices:
-
-1. Choose a small batch first, not dozens
-2. Use the same short text for all samples
-3. Name files in a stable numbered format such as:
-   - `01_name.wav`
-   - `02_name.wav`
-   - `03_name.wav`
-4. Keep each sample short for faster comparison
-5. Ask the user to respond by number
-
-This is better than asking the user to remember voice names.
-
-## Language guidance
-
-Match the test text to the user's actual use case.
-
-- If the user wants Chinese voice output, test with Chinese text
-- If the user wants English output, test with English text
-- If the user wants mixed-language output, test with mixed-language text
-
-Do not assume an English-oriented voice will sound acceptable when forced to speak Chinese.
-
 ## File naming and location
 
 Prefer a predictable temporary or workspace-local path such as:
 
 - `/tmp/openclaw-voice/`
 - `/Users/yy/.openclaw/workspace/tmp/voice/`
-
-When generating multiple samples, create a dedicated subdirectory:
-
-- `/Users/yy/.openclaw/workspace/tmp/voice/samples/`
 
 Always return absolute paths.
 
@@ -139,7 +90,6 @@ When you finish, report concrete facts only:
 Good:
 
 - “Generated `/absolute/path/sample.wav` successfully.”
-- “Created 5 numbered voice samples in `/absolute/path/samples/`.”
 
 Avoid vague progress language if no output file exists yet.
 
