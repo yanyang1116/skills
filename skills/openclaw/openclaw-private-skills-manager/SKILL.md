@@ -119,7 +119,7 @@ Do not over-optimize it.
 
 Always run the existing process:
 
-1. Scan `/Users/yy/Documents/yy/skills/skills/openclaw`
+1. Scan `/Users/yy/Documents/github/skills/skills/openclaw`
 2. Find each direct child directory that represents a skill
 3. Use the directory name as the final path segment in the GitHub URL
 4. Reinstall every discovered skill globally with OpenClaw
@@ -127,14 +127,14 @@ Always run the existing process:
 
 Private fixed parameters:
 
-- Local source directory: `/Users/yy/Documents/yy/skills/skills/openclaw`
+- Local source directory: `/Users/yy/Documents/github/skills/skills/openclaw`
 - GitHub prefix: `https://github.com/yanyang1116/skills/tree/main/skills/openclaw/`
 - Install pattern: `skills add <url> --agent openclaw -g --yes`
 
 Recommended enumeration command:
 
 ```bash
-find /Users/yy/Documents/yy/skills/skills/openclaw \
+find /Users/yy/Documents/github/skills/skills/openclaw \
   -mindepth 1 -maxdepth 1 -type d \
   -exec basename {} \; | sort
 ```
